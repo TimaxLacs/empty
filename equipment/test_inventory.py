@@ -78,7 +78,7 @@ class InventoryContractTests(unittest.TestCase):
         self.assertEqual(archi["core"]["c10"], "-")
         self.assertEqual(archi["core"]["w06"], "+")
         self.assertEqual(archi["core"]["b03"], "-")
-        self.assertEqual(archi["core"]["b05"], "~")
+        self.assertEqual(archi["core"]["b05"], "+")
         self.assertEqual(archi["core"]["g08"], "-")
         self.assertEqual(archi["individual"]["i17"], "-")
 
@@ -107,7 +107,7 @@ class InventoryContractTests(unittest.TestCase):
         ovod = PEOPLE["Овод"]
         self.assertEqual(ovod["role"], "Сапёр")
         self.assertEqual(ovod["core"]["b09"], "-")
-        self.assertEqual(ovod["core"]["g01"], "-")
+        self.assertEqual(ovod["core"]["g01"], "+")
         self.assertEqual(ovod["core"]["g03"], "-")
         extras = {row["item"]: row["status"] for row in ovod["extra"]}
         self.assertEqual(extras["Привод"], "-")
@@ -130,7 +130,9 @@ class InventoryContractTests(unittest.TestCase):
         self.assertEqual(self.names("c01", "+"), ["Арчи", "Овод"])
         self.assertEqual(self.names("g04", "-"), ["Шершень", "Велес"])
         self.assertEqual(self.names("b07", "~"), ["Шуга"])
-        self.assertEqual(self.names("b05", "~"), ["Арчи"])
+        self.assertEqual(self.names("b05", "+"), ["Горизонт", "Арчи", "Шершень", "Велес", "Матрос", "Овод"])
+        self.assertEqual(self.names("g01", "+"), ["Горизонт", "Геккон", "Шуга", "Арчи", "Шершень", "Матрос", "Овод"])
+        self.assertEqual(self.names("g01", "-"), ["Рыжий", "Велес"])
         self.assertEqual(self.names("c03", "!"), ["Шуга"])
         self.assertEqual(self.names("c03", ">"), ["Геккон", "Рыжий"])
 
