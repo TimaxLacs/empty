@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>2-е звено — комплектация снаряжения</title>
+  <title>Комплектация одежды, экипировки и снаряжения</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -448,7 +448,7 @@
       return coreItems.filter((item) => person.core[item.id] === ">");
     }
 
-    document.getElementById("unit-stamp").textContent = DATA.meta.unit;
+    document.getElementById("unit-stamp").textContent = "Сводка по предметам";
     document.getElementById("main-title").textContent = DATA.meta.title;
     document.getElementById("lede").textContent = DATA.meta.inspection;
     document.getElementById("inspect").textContent = DATA.meta.date;
@@ -517,7 +517,7 @@
           }).join("")}
         </div>
         <div class="hot">
-          <h2>Где проседает всё звено</h2>
+          <h2>Где не хватает сразу нескольким</h2>
           <p class="notice">Позиции, которых нет минимум у четырёх человек. Это удобный список для общей закупки.</p>
           <div class="hot-list">
             ${itemGaps.map((row) => `

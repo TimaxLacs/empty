@@ -2,20 +2,21 @@
 from __future__ import annotations
 
 import json
+from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 DATA = json.loads((ROOT / "data.json").read_text(encoding="utf-8"))
 
-WORD = {
-    "+": "есть",
-    "-": "нет",
-    ">": "едет",
-    "~": "частично",
-    "!": "есть, взять обязательно",
-    "x": "не требуется",
-    "?": "не сказано",
-}
+STATUS_LINES = (
+    ("+", "есть"),
+    ("!", "есть, взять обязательно"),
+    (">", "едет"),
+    ("~", "частично"),
+    ("-", "нет"),
+    ("?", "не сказано"),
+    ("x", "не требуется"),
+)
 
 NEED = {
     "optional": "по желанию",
@@ -30,169 +31,138 @@ NEED = {
 }
 
 
-def core_items():
-    items = []
-    for cat in DATA["categories"]:
-        for index, item in enumerate(cat["items"], start=1):
-            items.append({**item, "cat": cat["title"], "num": index})
-    return items
+def names_for(item_id: str, code: str) -> list[str]:
+    return [person["name"] for person in DATA["people"] if person["core"][item_id] == code]
 
 
-def counts(person, items):
-    values = [person["core"][item["id"]] for item in items]
-    have = sum(v in {"+", "!"} for v in values)
-    wait = sum(v == ">" for v in values)
-    part = sum(v == "~" for v in values)
-    miss = sum(v == "-" for v in values)
-    total = have + wait + part + miss
-    now = round(have / total * 100) if total else 0
-    return have, wait, part, miss, total, now
+def names_for_individual(item_id: str, code: str) -> list[str]:
+    return [person["name"] for person in DATA["people"] if person["individual"][item_id] == code]
 
 
-def line(num: int, name: str, code: str, suffix: str = "") -> str:
-    extra = f" {suffix}" if suffix else ""
-    return f"{num}. {name} — {WORD[code]}{extra}"
+def visible_groups(groups: list[tuple[str, list[str]]]) -> list[tuple[str, list[str]]]:
+    return [(label, names) for label, names in groups if names and label != "не требуется"]
+
+
+def item_block(out: list[str], title: str, groups: list[tuple[str, list[str]]]) -> None:
+    out.append(title)
+    shown = visible_groups(groups)
+    if shown:
+        for label, names in shown:
+            out.append(f"{label}: {', '.join(names)}")
+    else:
+        out.append("ни у кого не отмечен")
+    out.append("")
+
+
+def core_groups(item_id: str) -> list[tuple[str, list[str]]]:
+    return [(label, names_for(item_id, code)) for code, label in STATUS_LINES]
+
+
+def individual_groups(item_id: str) -> list[tuple[str, list[str]]]:
+    return [(label, names_for_individual(item_id, code)) for code, label in STATUS_LINES]
+
+
+def extra_groups() -> list[tuple[str, list[tuple[str, list[str]]]]]:
+    buckets: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
+    for person in DATA["people"]:
+        for row in person["extra"]:
+            name = row["item"]
+            if row.get("detail"):
+                name = f"{row['item']} ({row['detail']})"
+            buckets[name][row["status"]].append(person["name"])
+    blocks = []
+    for item_name in buckets:
+        groups = [(label, buckets[item_name].get(code, [])) for code, label in STATUS_LINES]
+        blocks.append((item_name, groups))
+    return blocks
 
 
 def render() -> str:
-    items = core_items()
     out: list[str] = []
-    out.append("2-е ЗВЕНО")
     out.append("Комплектация одежды, экипировки и снаряжения")
-    out.append(f"Сводка на {DATA['meta']['date']}")
     out.append("")
-    out.append(DATA["meta"]["inspection"])
+    out.append("По каждому предмету — у кого есть, у кого нет, у кого едет.")
+    out.append("Привод, магазины, лоадер, шомпол, зарядное, шары и аккумулятор в обязательный список не входят, но в конце тоже расписаны.")
     out.append("")
-    out.append("Как читать:")
-    out.append("есть — предмет на руках")
-    out.append("едет — в пути")
-    out.append("частично — есть, но не соответствует требованию")
-    out.append("есть, взять обязательно — в исходном списке стояло «!»")
-    out.append("нет — отсутствует")
-    out.append("не требуется — не по специальности")
-    out.append("не сказано — человек это не отмечал")
-    out.append("")
-    out.append("Если человек прислал только то, чего нет, все остальные позиции обязательного списка отмечены как «есть».")
-    out.append("")
-    out.append("════════════════════════════════════════")
-    out.append("СВОДКА ПО ЗВЕНУ")
-    out.append("════════════════════════════════════════")
+    out.append("Если человек прислал только то, чего нет, остальные обязательные позиции отмечены как «есть».")
     out.append("")
 
-    for person in DATA["people"]:
-        have, wait, part, miss, total, now = counts(person, items)
-        tail = []
-        if wait:
-            tail.append(f"едет {wait}")
-        if part:
-            tail.append(f"частично {part}")
-        extra = f", {', '.join(tail)}" if tail else ""
-        out.append(f"{person['name']} ({person['role']}) — есть {have}/{total} ({now}%), нет {miss}{extra}")
-
-    out.append("")
-    out.append("Где проседает всё звено (нет минимум у 4 человек):")
-    out.append("")
-    gaps = []
-    for item in items:
-        missing = [p["name"] for p in DATA["people"] if p["core"][item["id"]] == "-"]
-        waiting = [p["name"] for p in DATA["people"] if p["core"][item["id"]] == ">"]
-        if len(missing) >= 4:
-            gaps.append((len(missing), item, missing, waiting))
-    gaps.sort(key=lambda row: (-row[0], row[1]["cat"], row[1]["name"]))
-    for n, item, missing, waiting in gaps:
-        wait_txt = f"; едет: {', '.join(waiting)}" if waiting else ""
-        out.append(f"— {item['cat']} / {item['name']}: нет у {n} ({', '.join(missing)}){wait_txt}")
-
-    for person in DATA["people"]:
-        have, wait, part, miss, total, now = counts(person, items)
-        out.append("")
+    for cat in DATA["categories"]:
         out.append("════════════════════════════════════════")
-        out.append(f"{person['name'].upper()} · {person['role']}")
-        out.append(f"есть {have}/{total} · едет {wait} · частично {part} · нет {miss} · готовность {now}%")
-        out.append(f"источник: {person['source']}")
+        out.append(cat["title"].upper())
         out.append("════════════════════════════════════════")
-
-        for cat in DATA["categories"]:
-            out.append("")
-            out.append(cat["title"])
-            for index, item in enumerate(cat["items"], start=1):
-                out.append(line(index, item["name"], person["core"][item["id"]]))
-
-        shown = [
-            (index, item, person["individual"][item["id"]])
-            for index, item in enumerate(DATA["individual"], start=1)
-            if person["individual"][item["id"]] != "x"
-        ]
         out.append("")
-        out.append("Индивидуальная экипировка")
-        if shown:
-            for index, item, code in shown:
-                out.append(line(index, item["name"], code, f"({NEED[item['need']]})"))
-        else:
-            out.append("по специальности и «по желанию» отдельно не расписывал")
+        for index, item in enumerate(cat["items"], start=1):
+            item_block(out, f"{index}. {item['name']}", core_groups(item["id"]))
 
-        if person["extra"]:
-            out.append("")
-            out.append("Прочее (в обязательный список не входит, но проверяется)")
-            for index, row in enumerate(person["extra"], start=1):
-                detail = f" — {row['detail']}" if row.get("detail") else ""
-                out.append(line(index, row["item"] + detail, row["status"]))
-
-        def named(item):
-            return f"{item['cat']} / {item['name']}"
-
-        miss_items = [item for item in items if person["core"][item["id"]] == "-"]
-        wait_items = [item for item in items if person["core"][item["id"]] == ">"]
-        part_items = [item for item in items if person["core"][item["id"]] == "~"]
-        flag_items = [item for item in items if person["core"][item["id"]] == "!"]
-
-        out.append("")
-        out.append("Коротко по обязательным позициям")
-        out.append(f"Не хватает: {'; '.join(named(item) for item in miss_items) if miss_items else 'ничего'}")
-        if wait_items:
-            out.append(f"Едет: {'; '.join(named(item) for item in wait_items)}")
-        if part_items:
-            out.append(f"Частично: {'; '.join(named(item) for item in part_items)}")
-        if flag_items:
-            out.append(f"Взять обязательно: {'; '.join(named(item) for item in flag_items)}")
-
-        if person["notes"]:
-            out.append("")
-            out.append("Пояснения")
-            for note in person["notes"]:
-                out.append(f"— {note}")
-
-    extra_map: dict[str, list[str]] = {}
-    for person in DATA["people"]:
-        for row in person["extra"]:
-            if row["status"] == "-":
-                extra_map.setdefault(row["item"], []).append(person["name"])
-
+    out.append("════════════════════════════════════════")
+    out.append("ИНДИВИДУАЛЬНАЯ ЭКИПИРОВКА")
+    out.append("════════════════════════════════════════")
     out.append("")
+    for index, item in enumerate(DATA["individual"], start=1):
+        item_block(
+            out,
+            f"{index}. {item['name']} ({NEED[item['need']]})",
+            individual_groups(item["id"]),
+        )
+
+    extra = extra_groups()
     out.append("════════════════════════════════════════")
     out.append("ПРОЧЕЕ, ЧТО ТОЖЕ ПРОВЕРЯЮТ")
     out.append("════════════════════════════════════════")
     out.append("")
-    out.append("Привод, магазины, лоадер, шомпол, зарядное, шары и аккумулятор в базовый список не входят.")
-    out.append("")
-    if extra_map:
-        for item, names in extra_map.items():
-            out.append(f"— {item}: нет у {', '.join(names)}")
-    else:
-        out.append("Отдельных дыр вне списка не отмечено.")
+    for item_name, groups in extra:
+        item_block(out, item_name, groups)
 
-    out.append("")
     out.append("════════════════════════════════════════")
-    out.append("КАК СОБИРАЛСЯ ОТЧЁТ")
+    out.append("ЕДЕТ И ЧАСТИЧНО")
     out.append("════════════════════════════════════════")
     out.append("")
-    for rule in DATA["meta"]["rules"]:
-        out.append(f"— {rule}")
+    incoming = []
+    partial = []
+    flag = []
+    for cat in DATA["categories"]:
+        for item in cat["items"]:
+            for person in DATA["people"]:
+                code = person["core"][item["id"]]
+                label = f"{item['name']} — {person['name']}"
+                if cat["id"] == "winter":
+                    label = f"{item['name']} (зима) — {person['name']}"
+                if code == ">":
+                    incoming.append(label)
+                elif code == "~":
+                    partial.append(label)
+                elif code == "!":
+                    flag.append(label)
+    if incoming:
+        out.append("Едет")
+        for row in incoming:
+            out.append(f"— {row}")
+        out.append("")
+    if partial:
+        out.append("Частично")
+        for row in partial:
+            out.append(f"— {row}")
+        out.append("")
+    if flag:
+        out.append("Есть, взять обязательно")
+        for row in flag:
+            out.append(f"— {row}")
+        out.append("")
+
+    out.append("════════════════════════════════════════")
+    out.append("ПОЯСНЕНИЯ ПО СПОРНЫМ МЕСТАМ")
+    out.append("════════════════════════════════════════")
     out.append("")
-    out.append("Роли, которые не были названы прямо, выведены только из специальной экипировки:")
-    out.append("Горизонт и Овод — сапёры, Велес — гранатомётчик, Арчи — марксман по коврику для стрельбы.")
+    out.append("Геккон: очки защитные и варбелт стоят и в «есть», и в «нет». Засчитаны как есть — по списку наличия.")
+    out.append("Шуга: было два сообщения. Взят второй полный чек-лист. Куртка демисезонная с «!» — есть, взять обязательно. JPC с «+−» — частично.")
+    out.append("Арчи: чехол на очки есть, но не мультикам — частично. Зимы нет, кроме чехла на шлем.")
+    out.append("Шершень и Велес: «зимы нет» отнесено к зимнему комплекту. Куртка зимняя в одежде отдельно не названа — засчитана как есть.")
+    out.append("Велес: шлем нет, маячок на шлем в отсутствии не назван — засчитан как есть. Лучше перепроверить.")
+    out.append("Овод: «рюкзак сапёра» засчитан как нет рюкзака для перевозки. Лучше уточнить, есть ли обычный рюкзак.")
+    out.append("Матрос: «чехол на шлем маскировка» — это маскировочный чехол, обычный чехол на шлем есть.")
     out.append("")
-    return "\n".join(out) + "\n"
+    return "\n".join(out)
 
 
 if __name__ == "__main__":

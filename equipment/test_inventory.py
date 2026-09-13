@@ -117,6 +117,23 @@ class InventoryContractTests(unittest.TestCase):
         for person in DATA["people"]:
             self.assertEqual(person["core"]["g09"], "-", person["name"])
 
+    def names(self, item_id: str, code: str) -> list[str]:
+        return [person["name"] for person in DATA["people"] if person["core"][item_id] == code]
+
+    def test_item_groups_after_recheck(self):
+        self.assertEqual(self.names("b20", "+"), ["Горизонт", "Арчи", "Матрос", "Овод"])
+        self.assertEqual(self.names("b20", "-"), ["Геккон", "Шуга", "Рыжий", "Шершень", "Велес"])
+        self.assertEqual(self.names("c02", "-"), ["Шершень"])
+        self.assertEqual(self.names("c10", ">"), ["Шуга"])
+        self.assertEqual(self.names("c10", "+"), [])
+        self.assertEqual(self.names("c01", ">"), ["Геккон"])
+        self.assertEqual(self.names("c01", "+"), ["Арчи", "Овод"])
+        self.assertEqual(self.names("g04", "-"), ["Шершень", "Велес"])
+        self.assertEqual(self.names("b07", "~"), ["Шуга"])
+        self.assertEqual(self.names("b05", "~"), ["Арчи"])
+        self.assertEqual(self.names("c03", "!"), ["Шуга"])
+        self.assertEqual(self.names("c03", ">"), ["Геккон", "Рыжий"])
+
 
 if __name__ == "__main__":
     unittest.main()
