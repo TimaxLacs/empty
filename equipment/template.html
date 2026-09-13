@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Комплектация одежды, экипировки и снаряжения</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #16180f;
+      --bg-2: #1e2216;
+      --bg-3: #262b1c;
+      --ink: #efe6c9;
+      --ink-dim: #b7ae91;
+      --line: #3a412c;
+      --gold: #d4b36a;
+      --gold-2: #8c7438;
+      --have: #8fbf6a;
+      --have-bg: rgba(143, 191, 106, 0.14);
+      --miss: #d36a58;
+      --miss-bg: rgba(211, 106, 88, 0.14);
+      --wait: #e0b042;
+      --wait-bg: rgba(224, 176, 66, 0.16);
+      --part: #7aa3c9;
+      --part-bg: rgba(122, 163, 201, 0.16);
+      --flag: #e7d29a;
+      --na: #6b6a5c;
+      --shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #2a311c 0%, transparent 55%),
+        var(--bg);
+      font-family: "Golos Text", "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    .wrap { width: min(1280px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 80px; }
+
+    header.hero {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: end;
+      padding: 28px 0 22px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .stamp {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--gold);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .stamp::before {
+      content: "";
+      width: 28px;
+      height: 1px;
+      background: var(--gold);
+    }
+
+    h1 {
+      margin: 8px 0 10px;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.05;
+      font-weight: 700;
+    }
+
+    .lede { max-width: 68ch; color: var(--ink-dim); margin: 0; }
+
+    .hero-aside {
+      min-width: 220px;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      background: var(--bg-2);
+    }
+
+    .hero-aside strong { display: block; color: var(--gold); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .hero-aside p { margin: 8px 0 0; color: var(--ink-dim); font-size: 14px; }
+
+    nav.tabs {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 14px 0;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(10px);
+    }
+
+    nav.tabs button, .toolbar button, .toolbar select {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--bg-2);
+      color: var(--ink);
+      font: inherit;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+
+    nav.tabs button[aria-selected="true"] {
+      background: var(--gold);
+      color: #1a160c;
+      border-color: var(--gold);
+      font-weight: 600;
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .legend, .notice, .card, .person {
+      border: 1px solid var(--line);
+      background: var(--bg-2);
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      padding: 14px 16px;
+      margin: 8px 0 22px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--ink-dim);
+    }
+
+    .mark {
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      display: inline-grid;
+      place-items: center;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid currentColor;
+    }
+
+    .mark.have, .cell.have { color: var(--have); background: var(--have-bg); }
+    .mark.miss, .cell.miss { color: var(--miss); background: var(--miss-bg); }
+    .mark.wait, .cell.wait { color: var(--wait); background: var(--wait-bg); }
+    .mark.part, .cell.part { color: var(--part); background: var(--part-bg); }
+    .mark.flag, .cell.flag { color: var(--flag); background: rgba(231, 210, 154, 0.14); }
+    .mark.na, .cell.na { color: var(--na); background: transparent; }
+    .mark.unk, .cell.unk { color: var(--ink-dim); background: transparent; }
+
+    .overview {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .card { padding: 18px; }
+    .card .k { color: var(--gold); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
+    .card .v { font-size: 36px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; }
+    .card .s { color: var(--ink-dim); margin-top: 6px; }
+
+    .people-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+
+    .person {
+      padding: 16px 16px 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .person h3 { margin: 0; font-size: 22px; }
+    .role {
+      color: var(--gold);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .bar {
+      height: 8px;
+      background: #2f3524;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .bar span { display: block; height: 100%; }
+    .bar .h { background: var(--have); }
+    .bar .w { background: var(--wait); }
+    .bar .p { background: var(--part); }
+    .bar .m { background: var(--miss); }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: var(--ink-dim);
+    }
+
+    .hot { margin-top: 28px; }
+    .hot h2, .matrix-wrap h2, .person-block h2, .buy h2 { font-size: 22px; margin: 0 0 12px; }
+    .hot-list, .buy-list { display: grid; gap: 8px; }
+
+    .hot-row, .buy-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 1.4fr) 90px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--bg-2);
+      border: 1px solid var(--line);
+    }
+
+    .count { font-family: "IBM Plex Mono", monospace; color: var(--miss); font-weight: 600; }
+
+    .names { color: var(--ink-dim); font-size: 14px; }
+
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
+
+    .matrix-scroller {
+      overflow: auto;
+      border: 1px solid var(--line);
+      background: var(--bg-2);
+      max-height: 78vh;
+    }
+
+    table.matrix {
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 980px;
+      width: 100%;
+      font-size: 13px;
+    }
+
+    table.matrix th, table.matrix td {
+      border-bottom: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      padding: 7px 8px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    table.matrix th:first-child, table.matrix td:first-child {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: #222716;
+      min-width: 230px;
+    }
+
+    table.matrix thead th {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: #2b3220;
+    }
+
+    table.matrix thead th:first-child { z-index: 4; }
+    table.matrix .cat td {
+      background: #303826;
+      color: var(--gold);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+
+    a.person-link { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--gold-2); }
+
+    .dossiers { display: grid; gap: 18px; }
+    .dossier {
+      border: 1px solid var(--line);
+      background: var(--bg-2);
+      break-inside: avoid;
+    }
+
+    .dossier-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 18px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .cols {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0;
+    }
+
+    .col { padding: 8px 18px 16px; }
+    .col + .col { border-left: 1px solid var(--line); }
+    .col h4 {
+      margin: 14px 0 8px;
+      color: var(--gold);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .item-row {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 8px;
+      align-items: start;
+      padding: 4px 0;
+      font-size: 14px;
+    }
+
+    .note, .src {
+      padding: 0 18px 16px;
+      color: var(--ink-dim);
+      font-size: 14px;
+    }
+
+    .src { padding-top: 8px; border-top: 1px dashed var(--line); }
+
+    .notice { padding: 14px 16px; color: var(--ink-dim); margin-bottom: 18px; }
+
+    footer {
+      margin-top: 36px;
+      color: var(--ink-dim);
+      font-size: 13px;
+      border-top: 1px solid var(--line);
+      padding-top: 16px;
+    }
+
+    @media (max-width: 800px) {
+      header.hero, .overview, .cols, .hot-row, .buy-row { grid-template-columns: 1fr; }
+      .hero-aside { min-width: 0; }
+    }
+
+    @media print {
+      body { background: #fff; color: #222; }
+      nav.tabs, .toolbar, footer { display: none; }
+      .panel { display: none !important; }
+      .panel.active, #dossiers { display: block !important; }
+      .dossier { break-inside: avoid; border-color: #bbb; background: #fff; }
+      .mark, .cell { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div>
+        <div class="stamp" id="unit-stamp"></div>
+        <h1 id="main-title"></h1>
+        <p class="lede" id="lede"></p>
+      </div>
+      <aside class="hero-aside">
+        <strong>Сбор</strong>
+        <p id="inspect"></p>
+      </aside>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button type="button" data-tab="overview" aria-selected="true">Сводка</button>
+      <button type="button" data-tab="matrix">Матрица</button>
+      <button type="button" data-tab="dossiers">По людям</button>
+      <button type="button" data-tab="buy">Что докупить</button>
+    </nav>
+
+    <div class="legend" id="legend"></div>
+
+    <section id="overview" class="panel active"></section>
+    <section id="matrix" class="panel"></section>
+    <section id="dossiers" class="panel"></section>
+    <section id="buy" class="panel"></section>
+
+    <footer>
+      Отчёт собран по сообщениям личного состава. Где человек прислал только отсутствие — неназванные позиции базового списка отмечены как «есть».
+      Привод и расходники вынесены в блок «Прочее», потому что в обязательный перечень не входят, но тоже проверяются.
+    </footer>
+  </div>
+
+  <script id="data" type="application/json">__DATA__</script>
+  <script>
+    const DATA = JSON.parse(document.getElementById("data").textContent);
+
+    const STATUS = {
+      "+": { cls: "have", label: "есть", short: "+" },
+      "-": { cls: "miss", label: "нет", short: "−" },
+      ">": { cls: "wait", label: "едет", short: "→" },
+      "~": { cls: "part", label: "частично", short: "±" },
+      "!": { cls: "flag", label: "есть, взять", short: "!" },
+      "x": { cls: "na", label: "не требуется", short: "—" },
+      "?": { cls: "unk", label: "не сказано", short: "?" }
+    };
+
+    const NEED_LABEL = {
+      optional: "по желанию",
+      sniper: "снайпер",
+      mg: "пулемётчик",
+      medic: "медик",
+      gl: "гранатомётчик",
+      mg_sapper: "пулемётчик / сапёр",
+      sapper: "сапёр",
+      sniper_marksman: "снайпер / марксман",
+      sapper_sniper: "сапёр / снайпер"
+    };
+
+    const coreItems = DATA.categories.flatMap((cat) => cat.items.map((item) => ({ ...item, cat: cat.id, catTitle: cat.title })));
+
+    function mark(code) {
+      const s = STATUS[code] || STATUS["?"];
+      return `<span class="mark ${s.cls}" title="${s.label}">${s.short}</span>`;
+    }
+
+    function counts(person) {
+      const values = coreItems.map((item) => person.core[item.id]);
+      const have = values.filter((v) => v === "+" || v === "!").length;
+      const wait = values.filter((v) => v === ">").length;
+      const part = values.filter((v) => v === "~").length;
+      const miss = values.filter((v) => v === "-").length;
+      const total = have + wait + part + miss;
+      const now = total ? Math.round((have / total) * 100) : 0;
+      const sunday = total ? Math.round(((have + wait) / total) * 100) : 0;
+      return { have, wait, part, miss, total, now, sunday };
+    }
+
+    function missingList(person) {
+      return coreItems.filter((item) => person.core[item.id] === "-");
+    }
+
+    function incomingList(person) {
+      return coreItems.filter((item) => person.core[item.id] === ">");
+    }
+
+    document.getElementById("unit-stamp").textContent = "Сводка по предметам";
+    document.getElementById("main-title").textContent = DATA.meta.title;
+    document.getElementById("lede").textContent = DATA.meta.inspection;
+    document.getElementById("inspect").textContent = DATA.meta.date;
+
+    document.getElementById("legend").innerHTML = [
+      ["+", "Есть"],
+      [">", "Едет"],
+      ["~", "Частично"],
+      ["!", "Есть, взять обязательно"],
+      ["-", "Нет"],
+      ["x", "Не требуется"],
+      ["?", "Не сказано"]
+    ].map(([code, label]) => `<span class="chip">${mark(code)}${label}</span>`).join("");
+
+    document.querySelectorAll("nav.tabs button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("nav.tabs button").forEach((b) => b.setAttribute("aria-selected", String(b === btn)));
+        document.querySelectorAll(".panel").forEach((panel) => panel.classList.toggle("active", panel.id === btn.dataset.tab));
+      });
+    });
+
+    function renderOverview() {
+      const squad = DATA.people.map(counts);
+      const have = squad.reduce((a, s) => a + s.have, 0);
+      const miss = squad.reduce((a, s) => a + s.miss, 0);
+      const wait = squad.reduce((a, s) => a + s.wait, 0);
+      const total = squad.reduce((a, s) => a + s.total, 0);
+      const avg = Math.round(squad.reduce((a, s) => a + s.now, 0) / squad.length);
+
+      const itemGaps = coreItems.map((item) => {
+        const people = DATA.people.filter((p) => p.core[item.id] === "-");
+        const waiting = DATA.people.filter((p) => p.core[item.id] === ">");
+        return { item, people, waiting, n: people.length };
+      }).filter((row) => row.n >= 4).sort((a, b) => b.n - a.n);
+
+      document.getElementById("overview").innerHTML = `
+        <div class="overview">
+          <article class="card"><div class="k">Личный состав</div><div class="v">${DATA.people.length}</div><div class="s">позывных в сводке</div></article>
+          <article class="card"><div class="k">Средняя готовность</div><div class="v">${avg}%</div><div class="s">${have} из ${total} обязательных позиций уже на руках</div></article>
+          <article class="card"><div class="k">Дыры / в пути</div><div class="v">${miss} / ${wait}</div><div class="s">нет сейчас · едет к сбору</div></article>
+        </div>
+        <div class="people-grid">
+          ${DATA.people.map((person) => {
+            const s = counts(person);
+            return `
+              <article class="person">
+                <div>
+                  <div class="role">${person.role}</div>
+                  <h3><a class="person-link" href="#p-${person.id}">${person.name}</a></h3>
+                </div>
+                <div class="bar" title="есть / едет / частично / нет">
+                  <span class="h" style="width:${(s.have / s.total) * 100}%"></span>
+                  <span class="w" style="width:${(s.wait / s.total) * 100}%"></span>
+                  <span class="p" style="width:${(s.part / s.total) * 100}%"></span>
+                  <span class="m" style="width:${(s.miss / s.total) * 100}%"></span>
+                </div>
+                <div class="stats">
+                  <span>сейчас ${s.now}%</span>
+                  <span>к воскресенью ${s.sunday}%</span>
+                  <span style="color:var(--have)">есть ${s.have}</span>
+                  <span style="color:var(--wait)">едет ${s.wait}</span>
+                  <span style="color:var(--miss)">нет ${s.miss}</span>
+                </div>
+              </article>
+            `;
+          }).join("")}
+        </div>
+        <div class="hot">
+          <h2>Где не хватает сразу нескольким</h2>
+          <p class="notice">Позиции, которых нет минимум у четырёх человек. Это удобный список для общей закупки.</p>
+          <div class="hot-list">
+            ${itemGaps.map((row) => `
+              <div class="hot-row">
+                <div><strong>${row.item.name}</strong><div class="names">${row.item.catTitle}</div></div>
+                <div class="count">${row.n} нет</div>
+                <div class="names">${row.people.map((p) => p.name).join(", ")}${row.waiting.length ? `<br>едет: ${row.waiting.map((p) => p.name).join(", ")}` : ""}</div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+
+      document.querySelectorAll("#overview .person-link").forEach((link) => {
+        link.addEventListener("click", () => {
+          document.querySelector('[data-tab="dossiers"]').click();
+        });
+      });
+    }
+
+    function renderMatrix() {
+      const head = `<tr><th>Позиция</th>${DATA.people.map((p) => `<th>${p.name}</th>`).join("")}</tr>`;
+      const body = DATA.categories.map((cat) => {
+        const catRow = `<tr class="cat"><td colspan="${DATA.people.length + 1}">${cat.title}</td></tr>`;
+        const rows = cat.items.map((item) => {
+          const cells = DATA.people.map((p) => {
+            const code = p.core[item.id];
+            const s = STATUS[code];
+            return `<td class="cell ${s.cls}" title="${p.name}: ${s.label}">${s.short}</td>`;
+          }).join("");
+          return `<tr><td>${item.name}</td>${cells}</tr>`;
+        }).join("");
+        return catRow + rows;
+      }).join("");
+
+      document.getElementById("matrix").innerHTML = `
+        <div class="notice">Читать по столбцу — комплект одного человека. Читать по строке — кого не хватает по конкретной вещи.</div>
+        <div class="matrix-scroller">
+          <table class="matrix">
+            <thead>${head}</thead>
+            <tbody>${body}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function itemLines(person, cat) {
+      return cat.items.map((item) => {
+        const code = person.core[item.id];
+        return `<div class="item-row">${mark(code)}<span>${item.name}</span></div>`;
+      }).join("");
+    }
+
+    function individualLines(person) {
+      return DATA.individual.map((item) => {
+        const code = person.individual[item.id];
+        if (code === "x") return "";
+        return `<div class="item-row">${mark(code)}<span>${item.name} <span class="names">(${NEED_LABEL[item.need]})</span></span></div>`;
+      }).join("") || `<div class="names">По специальности и «по желанию» отдельно не расписывал.</div>`;
+    }
+
+    function extraLines(person) {
+      if (!person.extra.length) return "";
+      return `<h4>Прочее, вне базового списка</h4>` + person.extra.map((row) => {
+        return `<div class="item-row">${mark(row.status)}<span>${row.item}${row.detail ? ` — ${row.detail}` : ""}</span></div>`;
+      }).join("");
+    }
+
+    function renderDossiers() {
+      document.getElementById("dossiers").innerHTML = `
+        <div class="dossiers">
+          ${DATA.people.map((person) => {
+            const s = counts(person);
+            const miss = missingList(person);
+            const wait = incomingList(person);
+            return `
+              <article class="dossier" id="p-${person.id}">
+                <div class="dossier-head">
+                  <div>
+                    <div class="role">${person.role}</div>
+                    <h2>${person.name}</h2>
+                    <div class="stats">
+                      <span>есть ${s.have}/${s.total}</span>
+                      <span>едет ${s.wait}</span>
+                      <span>нет ${s.miss}</span>
+                      <span>сейчас ${s.now}%</span>
+                    </div>
+                  </div>
+                  <div class="bar" style="width:220px; align-self:center;">
+                    <span class="h" style="width:${(s.have / s.total) * 100}%"></span>
+                    <span class="w" style="width:${(s.wait / s.total) * 100}%"></span>
+                    <span class="p" style="width:${(s.part / s.total) * 100}%"></span>
+                    <span class="m" style="width:${(s.miss / s.total) * 100}%"></span>
+                  </div>
+                </div>
+                <div class="cols">
+                  <div class="col">
+                    ${DATA.categories.slice(0, 2).map((cat) => `<h4>${cat.title}</h4>${itemLines(person, cat)}`).join("")}
+                  </div>
+                  <div class="col">
+                    ${DATA.categories.slice(2).map((cat) => `<h4>${cat.title}</h4>${itemLines(person, cat)}`).join("")}
+                    <h4>Индивидуальная экипировка</h4>
+                    ${individualLines(person)}
+                    ${extraLines(person)}
+                  </div>
+                </div>
+                <div class="note">
+                  <strong>Не хватает:</strong> ${miss.length ? miss.map((i) => i.short).join("; ") : "по базовому списку пусто."}
+                  ${wait.length ? `<br><strong>Едет:</strong> ${wait.map((i) => i.short).join("; ")}` : ""}
+                </div>
+                ${person.notes.length ? `<div class="note">${person.notes.map((n) => `• ${n}`).join("<br>")}</div>` : ""}
+                <div class="src">Источник: ${person.source}</div>
+              </article>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+
+    function renderBuy() {
+      const rows = coreItems.map((item) => {
+        const miss = DATA.people.filter((p) => p.core[item.id] === "-");
+        const wait = DATA.people.filter((p) => p.core[item.id] === ">");
+        const part = DATA.people.filter((p) => p.core[item.id] === "~");
+        return { item, miss, wait, part, n: miss.length };
+      }).filter((row) => row.n || row.wait.length || row.part.length)
+        .sort((a, b) => b.n - a.n || b.wait.length - a.wait.length);
+
+      const extraMap = {};
+      DATA.people.forEach((person) => {
+        person.extra.forEach((row) => {
+          if (row.status !== "-") return;
+          extraMap[row.item] = extraMap[row.item] || [];
+          extraMap[row.item].push(person.name);
+        });
+      });
+
+      document.getElementById("buy").innerHTML = `
+        <div class="notice">Это не магазинная корзина, а сводка дыр. Сначала закрываются позиции, которые режут готовность сразу нескольких человек.</div>
+        <h2>Обязательный список</h2>
+        <div class="buy-list">
+          ${rows.map((row) => `
+            <div class="buy-row">
+              <div><strong>${row.item.name}</strong><div class="names">${row.item.catTitle}</div></div>
+              <div class="count">${row.n ? row.n + " нет" : "—"}</div>
+              <div class="names">
+                ${row.miss.length ? "Нет: " + row.miss.map((p) => p.name).join(", ") : "Нет ни у кого из отмеченных"}
+                ${row.wait.length ? "<br>Едет: " + row.wait.map((p) => p.name).join(", ") : ""}
+                ${row.part.length ? "<br>Частично: " + row.part.map((p) => p.name).join(", ") : ""}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+        <h2 style="margin-top:28px">Прочее, что тоже проверяют</h2>
+        <div class="buy-list">
+          ${Object.entries(extraMap).map(([item, names]) => `
+            <div class="buy-row">
+              <div><strong>${item}</strong></div>
+              <div class="count">${names.length} нет</div>
+              <div class="names">${names.join(", ")}</div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    renderOverview();
+    renderMatrix();
+    renderDossiers();
+    renderBuy();
+  </script>
+</body>
+</html>
